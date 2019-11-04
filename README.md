@@ -3,13 +3,15 @@ HTTP Java server for the GeoPhoto Android app
 
 ## Configurar docker per a correr el servidor
 
-Utilitzarem la imatge de docker de [kartoza/postgis](https://github.com/kartoza/docker-postgis)
+Utilitzarem la imatge de docker de [amatmv/postgis](https://github.com/amatmv/docker-postgis)
 
 `docker pull kartoza/postgis`
 
 Crearem la imatge:
 
-`docker build -t kartoza/postgis git://github.com/kartoza/docker-postgis`
+`git clone git@github.com:amatmv/docker-postgis.git`
+`cd docker-postgis`
+`docker build -t postgis .`
 
 I aixecarem un container utilitzant la comanda: 
 
