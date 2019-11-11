@@ -1,4 +1,5 @@
 # GeoPhoto_Server
+
 GeoDjango server for the GeoPhoto Android app
 
 ## Configurar docker per a correr el servidor
@@ -9,9 +10,11 @@ Utilitzarem la imatge de docker de [amatmv/postgis](https://github.com/amatmv/do
 
 Crearem la imatge:
 
-`git clone git@github.com:amatmv/docker-postgis.git`
-`cd docker-postgis`
-`docker build -t postgis .`
+```
+git clone git@github.com:amatmv/docker-postgis.git
+cd docker-postgis
+docker build -t postgis . 
+```
 
 I aixecarem un container utilitzant la comanda: 
 
@@ -21,12 +24,12 @@ I aixecarem un container utilitzant la comanda:
 
 `docker exec -it postgis bash`
 
-`python3 -m venv geophoto`
+I ara, estant dins el docker, farem l'entorn virtual i instal·larem les dependències del servidor
 
-`source geophoto/bin/activate`
-
-`git clone https://github.com/amatmv/GeoPhoto_Server.git`
-
-`cd GeoPhoto_Server/`
-
-`pip install -r requirements.txt`
+```
+python3 -m venv geophoto
+source geophoto/bin/activate
+git clone https://github.com/amatmv/GeoPhoto_Server.git
+cd GeoPhoto_Server/
+pip install -r requirements.txt
+```
