@@ -2,7 +2,7 @@
 
 GeoDjango server for the GeoPhoto Android app
 
-## Configurar docker per a correr el servidor
+## Configurar docker per encapsular el PostGIS
 
 Per aixecar el container utilitzant la comanda: 
 
@@ -18,4 +18,5 @@ source geophoto/bin/activate
 git clone https://github.com/amatmv/GeoPhoto_Server.git
 cd GeoPhoto_Server/
 pip install -r requirements.txt
+python manage.py runserver
 ```
