@@ -11,14 +11,14 @@ Utilitzarem la imatge de docker de [amatmv/postgis](https://github.com/amatmv/do
 Crearem la imatge:
 
 ```
-git clone git@github.com:amatmv/docker-postgis.git
+git clone https://github.com/amatmv/docker-postgis.git
 cd docker-postgis
 docker build -t postgis . 
 ```
 
 I aixecarem un container utilitzant la comanda: 
 
-`docker run --name=postgis -d -e POSTGRES_USER=geophoto -e POSTGRES_PASS=geophoto -e POSTGRES_DBNAME=geophoto_db -p 5432:5432 kartoza/postgis:9.6-2.4`
+`docker run --name=postgis -d -e POSTGRES_USER=geophoto -e POSTGRES_PASS=geophoto -e POSTGRES_DBNAME=geophoto_db -p 5432:5432 postgis
 
 ## Clonar el repositori al docker
 
