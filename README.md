@@ -18,7 +18,7 @@ docker build -t postgis .
 
 I aixecarem un container utilitzant la comanda: 
 
-`docker run --name=postgis -d -e POSTGRES_USER=geophoto -e POSTGRES_PASS=geophoto -e POSTGRES_DBNAME=geophoto_db -p 5432:5432 postgis
+`docker run --name=postgis -d -e POSTGRES_USER=geophoto -e POSTGRES_PASS=geophoto -e POSTGRES_DBNAME=geophoto_db -p 5432:5432 postgis`
 
 ## Clonar el repositori al docker
 
