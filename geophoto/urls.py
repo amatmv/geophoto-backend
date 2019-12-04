@@ -1,4 +1,4 @@
-"""geophoto_server URL Configuration
+"""geophoto URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/1.11/topics/http/urls/
@@ -15,11 +15,11 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
-from api.resources import PhotoResource
+from geophoto_api.resources import PhotoResource
 
 note_resource = PhotoResource()
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^api/', include(note_resource.urls)),
+    url(r'^geophoto_api/', include(note_resource.urls)),
 ]
