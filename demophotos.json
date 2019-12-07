@@ -1,0 +1,10 @@
+[
+  {
+    "model": "geophotophoto",
+    "pk": 1,
+    "fields": {
+      "title": "First photo",
+      "location": "PHOTO("
+    }
+  }
+]

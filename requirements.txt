@@ -1,3 +1,6 @@
+pudb
+djangorestframework
+pathlib
 django
 psycopg2-binary
 django-tastypie
