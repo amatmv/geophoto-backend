@@ -1,4 +1,4 @@
-# GeoPhoto_Server
+# geophoto-backend
 
 GeoDjango server for the GeoPhoto Android app
 
@@ -15,7 +15,7 @@ Hem de tenir instal·lat el Python 3.6 i el PyPi versió 3.
 Farem l'entorn virtual i instal·larem les dependències del servidor
 
 ```
-git clone https://github.com/amatmv/GeoPhoto_Server.git
+git clone https://github.com/amatmv/geophoto-backend.git
 cd GeoPhoto_Server/
 pip install -r requirements.txt
 python manage.py makemigrations
