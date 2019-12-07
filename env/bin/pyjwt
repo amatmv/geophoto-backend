@@ -1,4 +1,4 @@
-#!/home/amat/Dropbox/udg/sgbd/GeoPhoto_Server/env/bin/python
+#!/home/amat/Dropbox/udg/sgbd/geophoto-backend/env/bin/python
 
 # -*- coding: utf-8 -*-
 import re

@@ -1,6 +1,7 @@
-pudb
-djangorestframework
-pathlib
 django
-psycopg2-binary
+djangorestframework
+djangorestframework-jwt
 django-tastypie
+django-cors-headers
+pathlib
+psycopg2-binary

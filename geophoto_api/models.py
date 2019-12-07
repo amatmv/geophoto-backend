@@ -1,15 +1,12 @@
 from django.contrib.gis.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
 
 
-class User(models.Model):
-
-    username = models.CharField(max_length=20)
-    full_name = models.CharField(max_length=64)
-    password = models.CharField(max_length=128)
+class User(AbstractUser):
+    full_name = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.full_name
+        return self.username
 
 
 class Photo(models.Model):
@@ -19,6 +16,7 @@ class Photo(models.Model):
     date_uploaded = models.DateField()
     widthPixels = models.PositiveIntegerField(null=True)
     heightPixels = models.PositiveIntegerField(null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
 class Provincia(models.Model):

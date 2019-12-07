@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/home/amat/Dropbox/udg/sgbd/GeoPhoto_Server/env"
+VIRTUAL_ENV="/home/amat/Dropbox/udg/sgbd/geophoto-backend/env"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

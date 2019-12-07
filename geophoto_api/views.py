@@ -10,18 +10,44 @@ from rest_framework.views import status
 from .decorators import validate_request_data
 from .serializers import PhotoSerializer, UserSerializer, TokenSerializer
 from .models import Photo
+from django.contrib.auth import get_user_model
 from datetime import datetime
+
+User = get_user_model()
 
 # Get the JWT settings
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 
+class ListCreateUsers(generics.ListCreateAPIView):
+    """
+    GET photo/
+    POST photo/
+    """
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, *args, **kwargs):
+        try:
+            users = self.queryset.get()
+            return Response(self.serializer_class(users).data)
+        except User.DoesNotExist:
+            return Response(
+                data={
+                    "message": "User does not exist"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class ListCreatePhotos(generics.ListCreateAPIView):
     """
-        GET photo/
-        POST photo/
-        """
+    GET photo/
+    POST photo/
+    """
     queryset = Photo.objects.all().order_by('-date_uploaded')
     serializer_class = PhotoSerializer
 
@@ -29,14 +55,26 @@ class ListCreatePhotos(generics.ListCreateAPIView):
 
     @validate_request_data
     def post(self, request, *args, **kwargs):
+        user = User.objects.get(id=kwargs['user_id'])
         a_song = Photo.objects.create(
-            title=request.data["title"],
-            artist=request.data["artist"]
+            title=request.data["title"], user=user
         )
         return Response(
             data=PhotoSerializer(a_song).data,
             status=status.HTTP_201_CREATED
         )
+
+    def get(self, request, *args, **kwargs):
+        try:
+            photos = self.queryset.get(kwargs=kwargs)
+            return Response(self.serializer_class(photos).data)
+        except Photo.DoesNotExist:
+            return Response(
+                data={
+                    "message": "Photo does not exist"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class LoginView(generics.CreateAPIView):
@@ -85,8 +123,10 @@ class RegisterUsers(generics.CreateAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        full_name = request.data.get('full_name', '')
         new_user = User.objects.create_user(
-            username=username, password=password, email=email
+            username=username, password=password, email=email, full_name=full_name
         )
         return Response(
             data=UserSerializer(new_user).data,
