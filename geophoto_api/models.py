@@ -1,4 +1,5 @@
 from django.contrib.gis.db import models
+from django.contrib.auth.models import User
 
 
 class User(models.Model):
@@ -16,8 +17,8 @@ class Photo(models.Model):
     title = models.CharField(max_length=100)
     location = models.PointField(srid=25831)
     date_uploaded = models.DateField()
-    widthPixels = models.PositiveIntegerField()
-    heightPixels = models.PositiveIntegerField()
+    widthPixels = models.PositiveIntegerField(null=True)
+    heightPixels = models.PositiveIntegerField(null=True)
 
 
 class Provincia(models.Model):
