@@ -10,13 +10,15 @@ Per aixecar el container utilitzant la comanda:
 
 ## Clonar el repositori
 
+Hem de tenir instal·lat el Python 3.6 i el PyPi versió 3.
+
 Farem l'entorn virtual i instal·larem les dependències del servidor
 
 ```
-python3 -m venv geophoto
-source geophoto/bin/activate
 git clone https://github.com/amatmv/GeoPhoto_Server.git
 cd GeoPhoto_Server/
 pip install -r requirements.txt
+python manage.py makemigrations
+python manage.py migrate
 python manage.py runserver
 ```
