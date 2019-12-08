@@ -8,7 +8,7 @@ urlpatterns = [
 
     # Llistar fotos (sota condicions) i/o crear-les
     path('photos/', ListCreatePhotos.as_view(), name='photos-list-create'),
-    
+
     # Autenticació d'usuaris
     path('login/', LoginView.as_view(), name="auth-login"),
     path('register/', RegisterUsers.as_view(), name="auth-register")

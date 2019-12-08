@@ -1,7 +1,9 @@
 django
 djangorestframework
 djangorestframework-jwt
-django-tastypie
+django-storages
+boto3
 django-cors-headers
 pathlib
 psycopg2-binary
+Pillow

@@ -7,7 +7,7 @@ from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import status
 
-from .decorators import validate_request_data
+from .decorators import validate_request_data_photo
 from .serializers import PhotoSerializer, UserSerializer, TokenSerializer
 from .models import Photo
 from django.contrib.auth import get_user_model
@@ -53,11 +53,21 @@ class ListCreatePhotos(generics.ListCreateAPIView):
 
     permission_classes = (permissions.IsAuthenticated,)
 
-    @validate_request_data
+    @validate_request_data_photo
     def post(self, request, *args, **kwargs):
-        user = User.objects.get(id=kwargs['user_id'])
+        date_uploaded = datetime.today().strftime('%Y-%m-%d')
+
+        exif_data = Photo.extract_exif_data(request.data['photo'])
+
+        create_vals = {
+            'title': request.data["title"],
+            'date_uploaded': date_uploaded,
+            'user': request.user,
+        }
+
+        create_vals.update(exif_data)
         a_song = Photo.objects.create(
-            title=request.data["title"], user=user
+            title=request.data["title"], date_uploaded=date_uploaded, user=request.user, location=location
         )
         return Response(
             data=PhotoSerializer(a_song).data,
@@ -79,7 +89,7 @@ class ListCreatePhotos(generics.ListCreateAPIView):
 
 class LoginView(generics.CreateAPIView):
     """
-    POST auth/login/
+    POST login/
     """
 
     # This permission class will over ride the global permission
