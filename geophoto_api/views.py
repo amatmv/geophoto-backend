@@ -64,11 +64,9 @@ class ListCreatePhotos(generics.ListCreateAPIView):
             'date_uploaded': date_uploaded,
             'user': request.user,
         }
-
         create_vals.update(exif_data)
-        a_song = Photo.objects.create(
-            title=request.data["title"], date_uploaded=date_uploaded, user=request.user, location=location
-        )
+
+        a_song = Photo.objects.create(create_vals)
         return Response(
             data=PhotoSerializer(a_song).data,
             status=status.HTTP_201_CREATED

@@ -1,5 +1,6 @@
 from PIL import Image
-from six import StringIO
+from io import BytesIO
+from datetime import datetime
 from PIL.ExifTags import TAGS, GPSTAGS
 from django.contrib.gis.db import models
 from django.contrib.auth.models import AbstractUser
@@ -91,52 +92,56 @@ class Photo(models.Model):
     def get_date_time(exifdata):
         if 'DateTime' in exifdata:
             date_and_time = exifdata['DateTime']
+            date_and_time = datetime.strptime(
+                date_and_time, '%Y:%m:%d %H:%M:%S'
+            ).strftime('%Y-%m-%d %H:%M:%S')
             return date_and_time
 
     @staticmethod
+    def get_exif_data(image):
+        """Returns a dictionary from the exif data of an PIL Image item. Also
+        converts the GPS Tags"""
+        exif_data = {}
+        info = image._getexif()
+        if info:
+            for tag, value in info.items():
+                decoded = TAGS.get(tag, tag)
+                if decoded == "GPSInfo":
+                    gps_data = {}
+                    for t in value:
+                        sub_decoded = GPSTAGS.get(t, t)
+                        gps_data[sub_decoded] = value[t]
+
+                    exif_data[decoded] = gps_data
+                else:
+                    exif_data[decoded] = value
+        return exif_data
+
+    @staticmethod
     def extract_exif_data(binary_photo):
-        def get_exif_data(image):
-            """Returns a dictionary from the exif data of an PIL Image item. Also
-            converts the GPS Tags"""
-            exif_data = {}
-            info = image._getexif()
-            if info:
-                for tag, value in info.items():
-                    decoded = TAGS.get(tag, tag)
-                    if decoded == "GPSInfo":
-                        gps_data = {}
-                        for t in value:
-                            sub_decoded = GPSTAGS.get(t, t)
-                            gps_data[sub_decoded] = value[t]
-
-                        exif_data[decoded] = gps_data
-                    else:
-                        exif_data[decoded] = value
-            return exif_data
-
-        image = Image.open(StringIO(binary_photo))
-        exifdata = get_exif_data(image)
+        image = Image.open(BytesIO(binary_photo))
+        exifdata = Photo.get_exif_data(image)
 
         lat = Photo.get_lat(exifdata)
         lon = Photo.get_lon(exifdata)
 
         location = "POINT({lat} {long})".format(lat=lat, long=lon)
-        width = exifdata['YResolution']
-        height = exifdata['XResolution']
+        width, height = image.size
 
         date_taken = Photo.get_date_time(exifdata)
         res = {
             'location': location,
             'widthPixels': width,
             'heightPixels': height,
-            'date_taken': date_taken
+            'created_at': date_taken
         }
         return res
 
 
-class Provincia(models.Model):
+class Comarca(models.Model):
 
     name = models.CharField(max_length=100)
     codi = models.CharField(max_length=25)
+    area = models.FloatField()
     geom = models.MultiPolygonField(srid=25831)
 
