@@ -1,17 +1,16 @@
 from django.contrib.auth.models import User
-from rest_framework_jwt.settings import api_settings
 from django.contrib.auth import authenticate, login
+from django.contrib.auth import get_user_model
 
-from rest_framework import generics
-from rest_framework import permissions
+from rest_framework import generics, permissions
+from rest_framework_jwt.settings import api_settings
 from rest_framework.response import Response
 from rest_framework.views import status
+from datetime import datetime
 
 from .decorators import validate_request_data_photo
 from .serializers import PhotoSerializer, UserSerializer, TokenSerializer
 from .models import Photo
-from django.contrib.auth import get_user_model
-from datetime import datetime
 
 User = get_user_model()
 
