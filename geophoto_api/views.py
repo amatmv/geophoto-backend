@@ -65,9 +65,9 @@ class ListCreatePhotos(generics.ListCreateAPIView):
         }
         create_vals.update(exif_data)
 
-        a_song = Photo.objects.create(create_vals)
+        created_photo = Photo.objects.create(**create_vals)
         return Response(
-            data=PhotoSerializer(a_song).data,
+            data=PhotoSerializer(created_photo).data,
             status=status.HTTP_201_CREATED
         )
 
