@@ -21,8 +21,7 @@ jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 class ListCreateUsers(generics.ListCreateAPIView):
     """
-    GET photo/
-    POST photo/
+    GET users/
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -31,8 +30,9 @@ class ListCreateUsers(generics.ListCreateAPIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            users = self.queryset.get()
-            return Response(self.serializer_class(users).data)
+            users = self.queryset.filter(**kwargs)
+            users_serialized = self.serializer_class(users, many=True).data
+            return Response(users_serialized)
         except User.DoesNotExist:
             return Response(
                 data={
@@ -73,8 +73,8 @@ class ListCreatePhotos(generics.ListCreateAPIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            photos = self.queryset.get(kwargs=kwargs)
-            return Response(self.serializer_class(photos).data)
+            photos = self.queryset.filter(**kwargs)
+            return Response(self.serializer_class(photos, many=True).data)
         except Photo.DoesNotExist:
             return Response(
                 data={
