@@ -56,7 +56,7 @@ class ListCreatePhotos(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         date_uploaded = datetime.today().strftime('%Y-%m-%d')
 
-        exif_data = Photo.extract_exif_data(request.data['photo'])
+        exif_data = Photo.extract_exif_data(request.data['photo'].file.read())
 
         create_vals = {
             'title': request.data["title"],
