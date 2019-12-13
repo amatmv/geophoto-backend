@@ -1,9 +1,10 @@
 from django.urls import path
-from .views import LoginView, RegisterUsers, ListCreatePhotos, ListCreateUsers, ListSearchAround
+from .views import ListSearchAround, RegisterUsers, ListCreatePhotos, ListUsers
+
 
 urlpatterns = [
     # Llistar usuaris
-    path('users/', ListCreateUsers.as_view(), name='users-list'),
+    path('users/', ListUsers.as_view(), name='users-list'),
 
     # Llistar fotos (sota condicions) i/o crear-les
     path('photos/', ListCreatePhotos.as_view(), name='photos-list-create'),

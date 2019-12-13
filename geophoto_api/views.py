@@ -1,4 +1,3 @@
-import simplejson as simplejson
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import get_user_model
@@ -21,7 +20,7 @@ jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
 
 
-class ListCreateUsers(generics.ListCreateAPIView):
+class ListUsers(generics.ListCreateAPIView):
     """
     GET users/
     """
@@ -53,33 +52,42 @@ class ListSearchAround(generics.ListCreateAPIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request, *args, **kwargs):
-        dist = request.GET.get('distance')
-        loc_lat = request.GET.get('location_lat')
-        loc_lon = request.GET.get('location_lon')
+        dist = request.data.get('distance')
+        loc_lat = request.data.get('location_lat')
+        loc_lon = request.data.get('location_lon')
 
-        cursor = connection.cursor()
-
-        cursor.execute("SELECT title, location, date_uploaded, \"widthPixels\", \"heightPixels\", user_id, created_at, photo, uuid FROM geophoto_api_photo WHERE ST_DWithin(ST_Transform(ST_SetSRID(geophoto_api_photo.location, 25831),4326)::geography, ST_Transform(ST_SetSRID(ST_Point(2.82493, 41.9831085),25831), 4326)::geography, 60);")
-        rows = cursor.fetchall()
-        # llista_Fotos = simplejson.dumps([dict(row.__dict__) for row in rows])
-        # for row in rows:
-        #     dict = {'title': row[0], 'location': row[1], 'date_uploaded': row[2], 'widthPixels': row[3], 'heightPixels': row[4], 'user_id': row[5], 'created_at': row[6], 'photo': row[7], 'uuid': row[8]}
-        #     llista_Fotos.append(self.serializer_class(dict, many=True).data)
+        query = """
+            SELECT 
+                title, 
+                location AS point, 
+                date_uploaded, 
+                "widthPixels", 
+                "heightPixels", 
+                user_id, 
+                created_at, 
+                photo, 
+                uuid 
+            FROM geophoto_api_photo 
+            WHERE ST_DWithin(
+                ST_Transform(
+                    ST_SetSRID(
+                        geophoto_api_photo.location, 25831
+                    ),4326
+                )::geography, 
+                ST_Transform(
+                    ST_SetSRID(
+                        ST_Point({lon}, {lat}), 25831
+                    ), 4326
+                )::geography, 
+                {dist}
+            );
+        """.format(
+            lon=loc_lon,
+            lat=loc_lat,
+            dist=dist
+        )
+        rows = Photo.objects.raw(query)
         return Response(self.serializer_class(rows, many=True).data)
-
-
-        # create_vals = {
-        #     'title': request.data["title"],
-        #     'date_uploaded': date_uploaded,
-        #     'user': request.user,
-        # }
-        # create_vals.update(exif_data)
-
-        # created_photo = Photo.objects.create(**create_vals)
-        # return Response(
-        #     data=PhotoSerializer(created_photo).data,
-        #     status=status.HTTP_201_CREATED
-        # )
 
 
 class ListCreatePhotos(generics.ListCreateAPIView):
@@ -113,8 +121,8 @@ class ListCreatePhotos(generics.ListCreateAPIView):
 
     def get(self, request, *args, **kwargs):
         try:
-            photos = self.queryset.filter(**kwargs)
-            return Response(self.serializer_class(photos, many=True).data)
+            photos = self.queryset.get(kwargs=kwargs)
+            return Response(self.serializer_class(photos).data)
         except Photo.DoesNotExist:
             return Response(
                 data={
