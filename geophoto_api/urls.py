@@ -1,6 +1,5 @@
 from django.urls import path
-from .views import LoginView, RegisterUsers, ListCreatePhotos, ListCreateUsers
-
+from .views import LoginView, RegisterUsers, ListCreatePhotos, ListCreateUsers, ListSearchAround
 
 urlpatterns = [
     # Llistar usuaris
@@ -10,6 +9,8 @@ urlpatterns = [
     path('photos/', ListCreatePhotos.as_view(), name='photos-list-create'),
 
     # Autenticació d'usuaris
-    path('login/', LoginView.as_view(), name="auth-login"),
-    path('register/', RegisterUsers.as_view(), name="auth-register")
+    path('register/', RegisterUsers.as_view(), name="auth-register"),
+
+    # Llistar fotos al voltant d'un punt
+    path('search_around/', ListSearchAround.as_view(), name="search-around")
 ]

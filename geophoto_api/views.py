@@ -1,6 +1,8 @@
+import simplejson as simplejson
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import get_user_model
+from django.db import connection
 
 from rest_framework import generics, permissions
 from rest_framework_jwt.settings import api_settings
@@ -23,10 +25,11 @@ class ListCreateUsers(generics.ListCreateAPIView):
     """
     GET users/
     """
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.AllowAny,)
 
     def get(self, request, *args, **kwargs):
         try:
@@ -40,6 +43,43 @@ class ListCreateUsers(generics.ListCreateAPIView):
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+class ListSearchAround(generics.ListCreateAPIView):
+    """
+    POST search_around/
+    """
+    serializer_class = PhotoSerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        dist = request.GET.get('distance')
+        loc_lat = request.GET.get('location_lat')
+        loc_lon = request.GET.get('location_lon')
+
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT title, location, date_uploaded, \"widthPixels\", \"heightPixels\", user_id, created_at, photo, uuid FROM geophoto_api_photo WHERE ST_DWithin(ST_Transform(ST_SetSRID(geophoto_api_photo.location, 25831),4326)::geography, ST_Transform(ST_SetSRID(ST_Point(2.82493, 41.9831085),25831), 4326)::geography, 60);")
+        rows = cursor.fetchall()
+        # llista_Fotos = simplejson.dumps([dict(row.__dict__) for row in rows])
+        # for row in rows:
+        #     dict = {'title': row[0], 'location': row[1], 'date_uploaded': row[2], 'widthPixels': row[3], 'heightPixels': row[4], 'user_id': row[5], 'created_at': row[6], 'photo': row[7], 'uuid': row[8]}
+        #     llista_Fotos.append(self.serializer_class(dict, many=True).data)
+        return Response(self.serializer_class(rows, many=True).data)
+
+
+        # create_vals = {
+        #     'title': request.data["title"],
+        #     'date_uploaded': date_uploaded,
+        #     'user': request.user,
+        # }
+        # create_vals.update(exif_data)
+
+        # created_photo = Photo.objects.create(**create_vals)
+        # return Response(
+        #     data=PhotoSerializer(created_photo).data,
+        #     status=status.HTTP_201_CREATED
+        # )
 
 
 class ListCreatePhotos(generics.ListCreateAPIView):

@@ -4,6 +4,7 @@ from datetime import datetime
 from PIL.ExifTags import TAGS, GPSTAGS
 from django.contrib.gis.db import models
 from django.contrib.auth.models import AbstractUser
+
 import uuid
 
 
@@ -65,7 +66,7 @@ class Photo(models.Model):
                 lat = Photo.convert_to_degress(gps_latitude)
                 if gps_latitude_ref != "N":
                     lat = 0 - lat
-                lat = str(f"{lat:.{5}f}")
+                # lat = str(f"{lat:.{5}f}")
                 return lat
         else:
             return None
@@ -83,7 +84,7 @@ class Photo(models.Model):
                 lon = Photo.convert_to_degress(gps_longitude)
                 if gps_longitude_ref != "E":
                     lon = 0 - lon
-                lon = str(f"{lon:.{5}f}")
+                # lon = str(f"{lon:.{5}f}")
                 return lon
         else:
             return None

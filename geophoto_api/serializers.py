@@ -10,7 +10,7 @@ User = get_user_model()
 class PhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Photo
-        fields = ('title', 'photo')
+        fields = ('title', 'location', 'date_uploaded', 'widthPixels', 'heightPixels', 'user_id', 'created_at', 'photo', 'uuid',)
 
 
 class UserSerializer(serializers.ModelSerializer):
