@@ -72,7 +72,7 @@ class ListSearchAround(generics.ListCreateAPIView):
                 ST_Transform(
                     ST_SetSRID(
                         geophoto_api_photo.location, 25831
-                    ),4326
+                    ), 4326
                 )::geography, 
                 ST_Transform(
                     ST_SetSRID(

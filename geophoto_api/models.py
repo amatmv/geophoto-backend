@@ -21,7 +21,7 @@ class Photo(models.Model):
         primary_key=True, default=uuid.uuid4, editable=False,
     )
     photo = models.ImageField(default='default.jpg', null=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField()
 
     title = models.CharField(max_length=100)
     location = models.PointField(srid=25831)
@@ -139,10 +139,41 @@ class Photo(models.Model):
         return res
 
 
-class Comarca(models.Model):
+class Provincia(models.Model):
 
-    name = models.CharField(max_length=100)
-    codi = models.CharField(max_length=25)
-    area = models.FloatField()
+    nomprov = models.CharField(max_length=100)
+    codiprov = models.CharField(max_length=25)
+    areaprov = models.FloatField(null=True)
     geom = models.MultiPolygonField(srid=25831)
 
+    class Meta:
+        ordering = ('nomprov',)
+        verbose_name_plural = ('provincies',)
+
+
+class Comarca(models.Model):
+
+    nomcomar = models.CharField(max_length=100)
+    codicomar = models.CharField(max_length=25)
+    areacomar = models.FloatField(null=True)
+    geom = models.MultiPolygonField(srid=25831)
+
+    class Meta:
+        ordering = ('nomcomar',)
+        verbose_name_plural = ('comarques',)
+
+
+class Municipi(models.Model):
+
+    nommuni = models.CharField(max_length=100)
+    codimuni = models.CharField(max_length=25)
+    codicomar = models.CharField(max_length=25)
+    codiprov = models.CharField(max_length=25)
+    comarca = models.ForeignKey(Comarca, on_delete=models.CASCADE, null=True)
+    provincia = models.ForeignKey(Provincia, on_delete=models.CASCADE, null=True)
+    areapol = models.FloatField(null=True)
+    geom = models.MultiPolygonField(srid=25831)
+
+    class Meta:
+        ordering = ('nommuni',)
+        verbose_name_plural = ('municipis',)
