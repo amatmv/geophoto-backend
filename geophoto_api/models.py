@@ -3,6 +3,7 @@ from io import BytesIO
 from datetime import datetime
 from PIL.ExifTags import TAGS, GPSTAGS
 from django.contrib.gis.db import models
+from django.contrib.gis.geos import Point
 from django.contrib.auth.models import AbstractUser
 
 import uuid
@@ -66,7 +67,7 @@ class Photo(models.Model):
                 lat = Photo.convert_to_degress(gps_latitude)
                 if gps_latitude_ref != "N":
                     lat = 0 - lat
-                # lat = str(f"{lat:.{5}f}")
+                lat = str("{0:.5f}".format(lat))
                 return lat
         else:
             return None
@@ -84,7 +85,7 @@ class Photo(models.Model):
                 lon = Photo.convert_to_degress(gps_longitude)
                 if gps_longitude_ref != "E":
                     lon = 0 - lon
-                # lon = str(f"{lon:.{5}f}")
+                lon = str("{0:.5f}".format(lon))
                 return lon
         else:
             return None
@@ -126,12 +127,11 @@ class Photo(models.Model):
         lat = Photo.get_lat(exifdata)
         lon = Photo.get_lon(exifdata)
 
-        location = "POINT({lat} {long})".format(lat=lat, long=lon)
         width, height = image.size
 
         date_taken = Photo.get_date_time(exifdata)
         res = {
-            'location': location,
+            'location': Point(float(lon), float(lat)),
             'widthPixels': width,
             'heightPixels': height,
             'created_at': date_taken

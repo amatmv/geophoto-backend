@@ -1,17 +1,15 @@
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import get_user_model
-from django.db import connection
 
 from rest_framework import generics, permissions
 from rest_framework_jwt.settings import api_settings
 from rest_framework.response import Response
 from rest_framework.views import status
-from datetime import datetime
 
 from .decorators import validate_request_data_photo
 from .serializers import PhotoSerializer, UserSerializer, TokenSerializer
-from .models import Photo
+from .models import *
 
 User = get_user_model()
 
@@ -56,37 +54,63 @@ class ListSearchAround(generics.ListCreateAPIView):
         loc_lat = request.data.get('location_lat')
         loc_lon = request.data.get('location_lon')
 
-        query = """
-            SELECT 
-                title, 
-                location AS point, 
-                date_uploaded, 
-                "widthPixels", 
-                "heightPixels", 
-                user_id, 
-                created_at, 
-                photo, 
-                uuid 
-            FROM geophoto_api_photo 
-            WHERE ST_DWithin(
-                ST_Transform(
-                    ST_SetSRID(
-                        geophoto_api_photo.location, 25831
-                    ), 4326
-                )::geography, 
-                ST_Transform(
-                    ST_SetSRID(
-                        ST_Point({lon}, {lat}), 25831
-                    ), 4326
-                )::geography, 
-                {dist}
-            );
-        """.format(
-            lon=loc_lon,
-            lat=loc_lat,
-            dist=dist
-        )
-        rows = Photo.objects.raw(query)
+        data = {}
+        if loc_lon and loc_lon and dist:
+            query = """
+                select photo.title, photo.location, prov.geom 
+                from geophoto_api_photo photo 
+                join geophoto_api_provincia prov 
+                on ST_WITHIN(prov.geom, photo.location);
+            
+                SELECT 
+                    title, 
+                    location AS point, 
+                    date_uploaded, 
+                    "widthPixels", 
+                    "heightPixels", 
+                    user_id, 
+                    created_at, 
+                    photo, 
+                    uuid 
+                FROM geophoto_api_photo 
+                WHERE ST_DWithin(
+                    ST_Transform(
+                        ST_SetSRID(
+                            geophoto_api_photo.location, 25831
+                        ), 4326
+                    )::geography, 
+                    ST_Transform(
+                        ST_SetSRID(
+                            ST_Point({lon}, {lat}), 25831
+                        ), 4326
+                    )::geography, 
+                    {dist}
+                );
+            """.format(
+                lon=loc_lon,
+                lat=loc_lat,
+                dist=dist
+            )
+            rows = Photo.objects.raw(query)
+            data = self.serializer_class(rows, many=True).data
+        return Response(data)
+
+
+class ListWithinAround(generics.ListCreateAPIView):
+    """
+    POST search_around/
+    """
+    serializer_class = PhotoSerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        zone = request.data.get('zone')
+        zone_type = request.data.get('zone_type', '')
+        if zone_type == 'provincia':
+            table = 'geophoto_api_provincia'
+
+        provincia = Provincia.objects.filter(nomprov=zone)
+        rows = Photo.objects.filter(location__within=provincia[0].geom)
         return Response(self.serializer_class(rows, many=True).data)
 
 

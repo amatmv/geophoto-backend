@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ListSearchAround, RegisterUsers, ListCreatePhotos, ListUsers
+from .views import ListSearchAround, ListWithinAround, ListCreatePhotos, ListUsers
 
 
 urlpatterns = [
@@ -10,6 +10,10 @@ urlpatterns = [
     path('photos/', ListCreatePhotos.as_view(), name='photos-list-create'),
 
     # Llistar fotos al voltant d'un punt
-    path('search_around/', ListSearchAround.as_view(), name="search-around")
+    path('search_around/', ListSearchAround.as_view(), name="search-around"),
+
+    # Llistar fotos dins una zona determinada
+    path('search_within/', ListWithinAround.as_view(), name="search-within")
+
 ]
 
