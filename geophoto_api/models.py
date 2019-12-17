@@ -27,7 +27,7 @@ class Photo(models.Model):
 
     title = models.CharField(max_length=100)
     location = models.PointField(srid=25831)
-    date_uploaded = models.DateField()
+    date_uploaded = models.DateTimeField()
     widthPixels = models.PositiveIntegerField(null=True)
     heightPixels = models.PositiveIntegerField(null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
