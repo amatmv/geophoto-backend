@@ -2,10 +2,9 @@ import boto3
 import io
 import base64
 
+from PIL import Image
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from rest_framework import generics, permissions

@@ -1,5 +1,3 @@
-from PIL import Image
-from io import BytesIO
 from datetime import datetime
 from PIL.ExifTags import TAGS, GPSTAGS
 from django.contrib.gis.db import models
