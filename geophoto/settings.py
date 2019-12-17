@@ -27,7 +27,11 @@ SECRET_KEY = '8kt^jyi#q2q9c&#6x_eo%revxtam_$m&(&3(o=pw1#lw95-ba&'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '192.168.43.161',
+    '127.0.0.1',
+    'localhost'
+]
 
 
 # Application definition
@@ -195,7 +199,7 @@ CORS_ALLOW_CREDENTIALS = True
 # Configuracio del bucket S3
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-AWS_S3_REGION_NAME = 'eu-west-3'
+AWS_S3_BASE_URL = 'https://s3-eu-west-3.amazonaws.com/'
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')

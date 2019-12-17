@@ -5,6 +5,7 @@ from PIL.ExifTags import TAGS, GPSTAGS
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import Point
 from django.contrib.auth.models import AbstractUser
+from django.contrib.gis.gdal import SpatialReference, CoordTransform
 
 import uuid
 
@@ -21,7 +22,7 @@ class Photo(models.Model):
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False,
     )
-    photo = models.ImageField(default='default.jpg', null=False)
+    url = models.CharField(max_length=200, default='foo.com')
     created_at = models.DateTimeField()
 
     title = models.CharField(max_length=100)
@@ -100,6 +101,30 @@ class Photo(models.Model):
             return date_and_time
 
     @staticmethod
+    def extract_exif_data(image):
+        exifdata = Photo.get_exif_data(image)
+
+        lat = Photo.get_lat(exifdata)
+        lon = Photo.get_lon(exifdata)
+
+        width, height = image.size
+
+        date_taken = Photo.get_date_time(exifdata)
+        pnt = False
+        if lat and lon:
+            transform = CoordTransform(SpatialReference(4326), SpatialReference(25831))
+            pnt = Point(float(lon), float(lat))
+            pnt.transform(transform)
+
+        res = {
+            'location': pnt,
+            'widthPixels': width,
+            'heightPixels': height,
+            'created_at': date_taken
+        }
+        return res
+
+    @staticmethod
     def get_exif_data(image):
         """Returns a dictionary from the exif data of an PIL Image item. Also
         converts the GPS Tags"""
@@ -118,25 +143,6 @@ class Photo(models.Model):
                 else:
                     exif_data[decoded] = value
         return exif_data
-
-    @staticmethod
-    def extract_exif_data(binary_photo):
-        image = Image.open(BytesIO(binary_photo))
-        exifdata = Photo.get_exif_data(image)
-
-        lat = Photo.get_lat(exifdata)
-        lon = Photo.get_lon(exifdata)
-
-        width, height = image.size
-
-        date_taken = Photo.get_date_time(exifdata)
-        res = {
-            'location': Point(float(lon), float(lat)),
-            'widthPixels': width,
-            'heightPixels': height,
-            'created_at': date_taken
-        }
-        return res
 
 
 class Provincia(models.Model):

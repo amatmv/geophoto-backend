@@ -1,14 +1,20 @@
+import boto3
+import io
+import base64
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from rest_framework import generics, permissions
 from rest_framework_jwt.settings import api_settings
 from rest_framework.response import Response
 from rest_framework.views import status
 
+from geophoto.settings import AWS_S3_BASE_URL, AWS_STORAGE_BUCKET_NAME
 from .decorators import validate_request_data_photo
-from .serializers import PhotoSerializer, UserSerializer, TokenSerializer
+from .serializers import PhotoSerializer, UserSerializer
 from .models import *
 
 User = get_user_model()
@@ -57,11 +63,6 @@ class ListSearchAround(generics.ListCreateAPIView):
         data = {}
         if loc_lon and loc_lon and dist:
             query = """
-                select photo.title, photo.location, prov.geom 
-                from geophoto_api_photo photo 
-                join geophoto_api_provincia prov 
-                on ST_WITHIN(prov.geom, photo.location);
-            
                 SELECT 
                     title, 
                     location AS point, 
@@ -81,7 +82,7 @@ class ListSearchAround(generics.ListCreateAPIView):
                     )::geography, 
                     ST_Transform(
                         ST_SetSRID(
-                            ST_Point({lon}, {lat}), 25831
+                            ST_Makepoint({lon}, {lat}), 25831
                         ), 4326
                     )::geography, 
                     {dist}
@@ -91,7 +92,7 @@ class ListSearchAround(generics.ListCreateAPIView):
                 lat=loc_lat,
                 dist=dist
             )
-            rows = Photo.objects.raw(query)
+            rows = Photo.objects.raw(query) or Photo.objects.all()
             data = self.serializer_class(rows, many=True).data
         return Response(data)
 
@@ -124,23 +125,74 @@ class ListCreatePhotos(generics.ListCreateAPIView):
 
     permission_classes = (permissions.IsAuthenticated,)
 
+    @staticmethod
+    def get_bytesIO(data):
+        if isinstance(data, InMemoryUploadedFile):
+            photo_buf = io.BytesIO(data.file.getvalue())
+        else:
+            b64_decoded = base64.b64decode(data)
+            photo_buf = io.BytesIO(b64_decoded)
+        return photo_buf
+
+    @staticmethod
+    def upload_s3_photo(photo_binary, key=None):
+        s3 = boto3.client('s3')
+
+        if key is None:
+            key = uuid.uuid4().hex[:6] + '.jpg'
+
+        s3.upload_fileobj(photo_binary, AWS_STORAGE_BUCKET_NAME, key)
+        url = "{aws_s3_url}{bucket_name}/{key}".format(
+            aws_s3_url=AWS_S3_BASE_URL,
+            bucket_name=AWS_STORAGE_BUCKET_NAME,
+            key=key
+        )
+        return url
+
+    @staticmethod
+    def generate_photo_name(photo_name):
+        return photo_name[:6] + '.jpg'
+
     @validate_request_data_photo
     def post(self, request, *args, **kwargs):
         date_uploaded = datetime.today().strftime('%Y-%m-%d')
 
-        exif_data = Photo.extract_exif_data(request.data['photo'].file.read())
+        photo_file = request.data['photo']
+        bytes_data = self.get_bytesIO(photo_file)
+        exif_data = Photo.extract_exif_data(Image.open(bytes_data))
 
-        create_vals = {
-            'title': request.data["title"],
-            'date_uploaded': date_uploaded,
-            'user': request.user,
-        }
-        create_vals.update(exif_data)
+        created_photo = None
+        try:
+            create_vals = {
+                'title': request.data["title"],
+                'date_uploaded': date_uploaded,
+                'user': request.user,
+            }
+            create_vals.update(exif_data)
 
-        created_photo = Photo.objects.create(**create_vals)
+            created_photo = Photo.objects.create(**create_vals)
+
+            respose_data = {
+                'message': 'Photo posted successfully!'
+            }
+            response_status = status.HTTP_201_CREATED
+        except Exception as e:
+            respose_data = {
+                "message": "Internal server error."
+            }
+            response_status = status.HTTP_500_INTERNAL_SERVER_ERROR
+            print(e)
+
+        if created_photo is not None:
+            bytes_data = self.get_bytesIO(photo_file)
+            key = self.generate_photo_name(created_photo.uuid.hex)
+            url = self.upload_s3_photo(bytes_data, key=key)
+            created_photo.url = url
+            created_photo.save()
+
         return Response(
-            data=PhotoSerializer(created_photo).data,
-            status=status.HTTP_201_CREATED
+            data=respose_data,
+            status=response_status
         )
 
     def get(self, request, *args, **kwargs):
@@ -154,35 +206,6 @@ class ListCreatePhotos(generics.ListCreateAPIView):
                 },
                 status=status.HTTP_404_NOT_FOUND
             )
-
-
-class LoginView(generics.CreateAPIView):
-    """
-    POST login/
-    """
-
-    # This permission class will over ride the global permission
-    # class setting
-    permission_classes = (permissions.AllowAny,)
-
-    queryset = User.objects.all()
-
-    def post(self, request, *args, **kwargs):
-        username = request.data.get("username", "")
-        password = request.data.get("password", "")
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            # login saves the user’s ID in the session,
-            # using Django’s session framework.
-            login(request, user)
-            serializer = TokenSerializer(data={
-                # using drf jwt utility functions to generate a token
-                "token": jwt_encode_handler(
-                    jwt_payload_handler(user)
-                )})
-            serializer.is_valid()
-            return Response(serializer.data)
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
 class RegisterUsers(generics.CreateAPIView):
