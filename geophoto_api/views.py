@@ -196,15 +196,12 @@ class ListWithinAround(generics.ListCreateAPIView):
             response_status = status.HTTP_400_BAD_REQUEST
         else:
             # try:
-
             if zone_type == 'provincia':
                 response_data = self.get_photos_taken_in_provincia(zone)
             elif zone_type == 'comarca':
                 response_data = self.get_photos_taken_in_comarca(zone)
             elif zone_type == 'municipi':
                 response_data = self.get_photos_taken_in_municipi(zone)
-            else:
-                raise
 
             response_status = status.HTTP_200_OK
             # except Exception as e:

@@ -38,10 +38,14 @@ class PhotoSerializer(serializers.ModelSerializer):
     provincia = serializers.SerializerMethodField()
     comarca = serializers.SerializerMethodField()
     municipi = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Photo
         fields = ('title', 'location', 'created_at', 'user', 'url', 'provincia', 'comarca', 'municipi')
+
+    def get_created_at(self, obj):
+        return obj.created_at.strftime('%a %d, %b %Y at %H:%M')
 
     def get_provincia(self, obj):
         provincia = Provincia.objects.filter(codiprov=obj.provincia)
