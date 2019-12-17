@@ -1,6 +1,7 @@
 import boto3
 import io
 import base64
+
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
@@ -64,35 +65,37 @@ class ListSearchAround(generics.ListCreateAPIView):
         if loc_lon and loc_lon and dist:
             query = """
                 SELECT 
+                    uuid,
+                    url, 
                     title, 
-                    location AS point, 
-                    date_uploaded, 
-                    "widthPixels", 
-                    "heightPixels", 
-                    user_id, 
-                    created_at, 
-                    photo, 
-                    uuid 
-                FROM geophoto_api_photo 
+                    location AS point,
+                    photo.user_id,
+                    created_at,
+                    prov.codiprov AS provincia,
+                    mun.codimuni AS municipi,
+                    comarca.codicomar AS comarca
+                FROM geophoto_api_photo photo
+                JOIN geophoto_api_provincia AS prov 
+                    ON ST_Contains(prov.geom, photo.location) 
+                JOIN geophoto_api_municipi AS mun
+                    ON ST_Contains(mun.geom, photo.location)
+                JOIN geophoto_api_comarca AS comarca
+                    ON ST_Contains(comarca.geom, photo.location)
                 WHERE ST_DWithin(
-                    ST_Transform(
-                        ST_SetSRID(
-                            geophoto_api_photo.location, 25831
-                        ), 4326
-                    )::geography, 
-                    ST_Transform(
-                        ST_SetSRID(
-                            ST_Makepoint({lon}, {lat}), 25831
-                        ), 4326
-                    )::geography, 
+                    ST_Transform(photo.location, 4326)::geography, 
+                    ST_SetSRID(ST_Makepoint({lon}, {lat}), 4326)::geography, 
                     {dist}
+                )
+                ORDER BY ST_Distance(
+                    ST_SetSRID(ST_MakePoint({lon}, {lat}), 4326), 
+                    ST_Transform(photo.location, 4326)
                 );
             """.format(
                 lon=loc_lon,
                 lat=loc_lat,
                 dist=dist
             )
-            rows = Photo.objects.raw(query) or Photo.objects.all()
+            rows = Photo.objects.raw(raw_query=query)
             data = self.serializer_class(rows, many=True).data
         return Response(data)
 
@@ -104,15 +107,111 @@ class ListWithinAround(generics.ListCreateAPIView):
     serializer_class = PhotoSerializer
     permission_classes = (permissions.AllowAny,)
 
+    def get_photos_taken_in_provincia(self, name):
+        query = """
+            SELECT
+                uuid,
+                url, 
+                title, 
+                location AS point,
+                photo.user_id,
+                created_at,
+                prov.codiprov AS provincia,
+                mun.codimuni AS municipi,
+                comarca.codicomar AS comarca
+            FROM geophoto_api_photo AS photo 
+            JOIN geophoto_api_provincia AS prov 
+                ON ST_Contains(prov.geom, photo.location) 
+                AND prov.nomprov like '{prov_name}'
+            JOIN geophoto_api_user u 
+                ON u.id = photo.user_id
+            JOIN geophoto_api_municipi AS mun
+                ON ST_Contains(mun.geom, photo.location)
+            JOIN geophoto_api_comarca AS comarca
+                ON ST_Contains(comarca.geom, photo.location)
+        """.format(prov_name=name)
+        rows = Photo.objects.raw(raw_query=query)
+        response_data = self.serializer_class(rows, many=True).data
+        return response_data
+
+    def get_photos_taken_in_comarca(self, name):
+        query = """
+            SELECT
+                uuid,
+                url, 
+                title, 
+                location AS point,
+                photo.user_id,
+                created_at,
+                prov.codiprov AS provincia,
+                mun.codimuni AS municipi,
+                comarca.codicomar AS comarca
+            FROM geophoto_api_photo AS photo 
+            JOIN geophoto_api_provincia AS prov 
+                ON ST_Contains(prov.geom, photo.location) 
+            JOIN geophoto_api_user u 
+                ON u.id = photo.user_id
+            JOIN geophoto_api_municipi AS mun
+                ON ST_Contains(mun.geom, photo.location)
+            JOIN geophoto_api_comarca AS comarca
+                ON ST_Contains(comarca.geom, photo.location)
+                AND comarca.nomcomar like '{comarca_name}'
+        """.format(comarca_name=name)
+        rows = Photo.objects.raw(raw_query=query)
+        response_data = self.serializer_class(rows, many=True).data
+        return response_data
+
+    def get_photos_taken_in_municipi(self, name):
+        query = """
+            SELECT
+                uuid,
+                url, 
+                title, 
+                location AS point,
+                photo.user_id,
+                created_at,
+                prov.codiprov AS provincia,
+                mun.codimuni AS municipi,
+                comarca.codicomar AS comarca
+            FROM geophoto_api_photo AS photo 
+            JOIN geophoto_api_provincia AS prov 
+                ON ST_Contains(prov.geom, photo.location) 
+            JOIN geophoto_api_user u 
+                ON u.id = photo.user_id
+            JOIN geophoto_api_municipi AS mun
+                ON ST_Contains(mun.geom, photo.location)
+                AND mun.nommuni like '{mun_name}'
+            JOIN geophoto_api_comarca AS comarca
+                ON ST_Contains(comarca.geom, photo.location)
+        """.format(mun_name=name)
+        rows = Photo.objects.raw(raw_query=query)
+        response_data = self.serializer_class(rows, many=True).data
+        return response_data
+
     def post(self, request, *args, **kwargs):
         zone = request.data.get('zone')
         zone_type = request.data.get('zone_type', '')
-        if zone_type == 'provincia':
-            table = 'geophoto_api_provincia'
 
-        provincia = Provincia.objects.filter(nomprov=zone)
-        rows = Photo.objects.filter(location__within=provincia[0].geom)
-        return Response(self.serializer_class(rows, many=True).data)
+        response_data = {}
+        if zone_type not in ('provincia', 'comarca', 'municipi'):
+            response_status = status.HTTP_400_BAD_REQUEST
+        else:
+            # try:
+
+            if zone_type == 'provincia':
+                response_data = self.get_photos_taken_in_provincia(zone)
+            elif zone_type == 'comarca':
+                response_data = self.get_photos_taken_in_comarca(zone)
+            elif zone_type == 'municipi':
+                response_data = self.get_photos_taken_in_municipi(zone)
+            else:
+                raise
+
+            response_status = status.HTTP_200_OK
+            # except Exception as e:
+            #     response_status = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+        return Response(data=response_data, status=response_status)
 
 
 class ListCreatePhotos(generics.ListCreateAPIView):
