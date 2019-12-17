@@ -4,12 +4,12 @@ from rest_framework.views import status
 
 def validate_request_data_photo(fn):
     def decorated(*args, **kwargs):
-        # args[0] == GenericView Object
         title = args[0].request.data.get("title", "")
-        if not title:
+        photo = args[0].request.data.get("photo", "")
+        if not title or not photo:
             return Response(
                 data={
-                    "message": "La foto ha de tenir un titol"
+                    "message": "The request must have the fields 'title' and 'photo' filled."
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
