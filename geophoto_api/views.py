@@ -121,7 +121,7 @@ class ListWithinAround(generics.ListCreateAPIView):
             FROM geophoto_api_photo AS photo 
             JOIN geophoto_api_provincia AS prov 
                 ON ST_Contains(prov.geom, photo.location) 
-                AND prov.nomprov like '{prov_name}'
+                AND prov.nomprov ILIKE '%%{prov_name}%%'
             JOIN geophoto_api_user u 
                 ON u.id = photo.user_id
             JOIN geophoto_api_municipi AS mun
@@ -154,7 +154,7 @@ class ListWithinAround(generics.ListCreateAPIView):
                 ON ST_Contains(mun.geom, photo.location)
             JOIN geophoto_api_comarca AS comarca
                 ON ST_Contains(comarca.geom, photo.location)
-                AND comarca.nomcomar like '{comarca_name}'
+                AND comarca.nomcomar ILIKE '%%{comarca_name}%%'
         """.format(comarca_name=name)
         rows = Photo.objects.raw(raw_query=query)
         response_data = self.serializer_class(rows, many=True).data
@@ -179,7 +179,7 @@ class ListWithinAround(generics.ListCreateAPIView):
                 ON u.id = photo.user_id
             JOIN geophoto_api_municipi AS mun
                 ON ST_Contains(mun.geom, photo.location)
-                AND mun.nommuni like '{mun_name}'
+                AND mun.nommuni ILIKE '%%{mun_name}%%'
             JOIN geophoto_api_comarca AS comarca
                 ON ST_Contains(comarca.geom, photo.location)
         """.format(mun_name=name)
