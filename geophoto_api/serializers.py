@@ -48,24 +48,27 @@ class PhotoSerializer(serializers.ModelSerializer):
         return obj.created_at.strftime('%a %d, %b %Y at %H:%M')
 
     def get_provincia(self, obj):
-        provincia = Provincia.objects.filter(codiprov=obj.provincia)
         nomprov = 'Província desconeguda'
-        if provincia:
-            nomprov = provincia[0].nomprov
+        if hasattr(obj, 'provincia') and getattr(obj, 'provincia'):
+            provincia = Provincia.objects.filter(codiprov=obj.provincia)
+            if provincia:
+                nomprov = provincia[0].nomprov
         return nomprov
 
     def get_municipi(self, obj):
-        municipi = Municipi.objects.filter(codimuni=obj.municipi)
         nommuni = 'Municipi desconegut'
-        if municipi:
-            nommuni = municipi[0].nommuni
+        if hasattr(obj, 'municipi') and getattr(obj, 'municipi'):
+            municipi = Municipi.objects.filter(codimuni=obj.municipi)
+            if municipi:
+                nommuni = municipi[0].nommuni
         return nommuni
 
     def get_comarca(self, obj):
-        comarca = Comarca.objects.filter(codicomar=obj.comarca)
         nomcomar = 'Comarca desconeguda'
-        if comarca:
-            nomcomar = comarca[0].nomcomar
+        if hasattr(obj, 'comarca') and getattr(obj, 'comarca'):
+            comarca = Comarca.objects.filter(codicomar=obj.comarca)
+            if comarca:
+                nomcomar = comarca[0].nomcomar
         return nomcomar
 
 
