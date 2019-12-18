@@ -119,14 +119,14 @@ class ListWithinAround(generics.ListCreateAPIView):
                 mun.codimuni AS municipi,
                 comarca.codicomar AS comarca
             FROM geophoto_api_photo AS photo 
-            JOIN geophoto_api_provincia AS prov 
+            LEFT JOIN geophoto_api_provincia AS prov 
                 ON ST_Contains(prov.geom, photo.location) 
                 AND prov.nomprov ILIKE '%%{prov_name}%%'
-            JOIN geophoto_api_user u 
+            LEFT JOIN geophoto_api_user u 
                 ON u.id = photo.user_id
-            JOIN geophoto_api_municipi AS mun
+            LEFT JOIN geophoto_api_municipi AS mun
                 ON ST_Contains(mun.geom, photo.location)
-            JOIN geophoto_api_comarca AS comarca
+            LEFT JOIN geophoto_api_comarca AS comarca
                 ON ST_Contains(comarca.geom, photo.location)
         """.format(prov_name=name)
         rows = Photo.objects.raw(raw_query=query)
@@ -352,8 +352,31 @@ class ListUserPhotos(generics.ListAPIView):
     def post(self, request, *args, **kwargs):
         try:
             username = request.data.get('username', None)
-            photos = self.queryset.select_related('user').filter(user__username=username)
-            return Response(self.serializer_class(photos, many=True).data)
+            query = """
+                SELECT
+                    uuid,
+                    url, 
+                    title, 
+                    location AS point,
+                    photo.user_id,
+                    created_at,
+                    prov.codiprov AS provincia,
+                    mun.codimuni AS municipi,
+                    comarca.codicomar AS comarca
+                FROM geophoto_api_photo AS photo 
+                JOIN geophoto_api_provincia AS prov 
+                    ON ST_Contains(prov.geom, photo.location) 
+                LEFT JOIN geophoto_api_user u 
+                    ON u.id = photo.user_id
+                    AND u.username ilike '{username}'
+                LEFT JOIN geophoto_api_municipi AS mun
+                    ON ST_Contains(mun.geom, photo.location)
+                LEFT JOIN geophoto_api_comarca AS comarca
+                    ON ST_Contains(comarca.geom, photo.location)
+            """.format(username=username)
+            rows = Photo.objects.raw(raw_query=query)
+            response_data = self.serializer_class(rows, many=True).data
+            return Response(response_data)
         except Photo.DoesNotExist:
             return Response(
                 data={
