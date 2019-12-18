@@ -74,11 +74,11 @@ class ListSearchAround(generics.ListCreateAPIView):
                     mun.codimuni AS municipi,
                     comarca.codicomar AS comarca
                 FROM geophoto_api_photo photo
-                JOIN geophoto_api_provincia AS prov 
+                LEFT JOIN geophoto_api_provincia AS prov 
                     ON ST_Contains(prov.geom, photo.location) 
-                JOIN geophoto_api_municipi AS mun
+                LEFT JOIN geophoto_api_municipi AS mun
                     ON ST_Contains(mun.geom, photo.location)
-                JOIN geophoto_api_comarca AS comarca
+                LEFT JOIN geophoto_api_comarca AS comarca
                     ON ST_Contains(comarca.geom, photo.location)
                 WHERE ST_DWithin(
                     ST_Transform(photo.location, 4326)::geography, 
