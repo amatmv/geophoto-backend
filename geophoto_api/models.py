@@ -99,6 +99,15 @@ class Photo(models.Model):
             return date_and_time
 
     @staticmethod
+    def create_point(lat=None, lon=None):
+        pnt = False
+        if lat is not None and lon is not None:
+            transform = CoordTransform(SpatialReference(4326), SpatialReference(25831))
+            pnt = Point(float(lon), float(lat))
+            pnt.transform(transform)
+        return pnt
+
+    @staticmethod
     def extract_exif_data(image):
         exifdata = Photo.get_exif_data(image)
 
@@ -108,14 +117,9 @@ class Photo(models.Model):
         width, height = image.size
 
         date_taken = Photo.get_date_time(exifdata)
-        pnt = False
-        if lat and lon:
-            transform = CoordTransform(SpatialReference(4326), SpatialReference(25831))
-            pnt = Point(float(lon), float(lat))
-            pnt.transform(transform)
 
         res = {
-            'location': pnt,
+            'location': Photo.create_point(lat=lat, lon=lon),
             'widthPixels': width,
             'heightPixels': height,
             'created_at': date_taken
