@@ -101,7 +101,7 @@ class ListSearchAround(generics.ListCreateAPIView):
 
 class ListWithinAround(generics.ListCreateAPIView):
     """
-    POST search_around/
+    POST search_within/
     """
     serializer_class = PhotoSerializer
     permission_classes = (permissions.AllowAny,)
@@ -195,17 +195,17 @@ class ListWithinAround(generics.ListCreateAPIView):
         if zone_type not in ('provincia', 'comarca', 'municipi'):
             response_status = status.HTTP_400_BAD_REQUEST
         else:
-            # try:
-            if zone_type == 'provincia':
-                response_data = self.get_photos_taken_in_provincia(zone)
-            elif zone_type == 'comarca':
-                response_data = self.get_photos_taken_in_comarca(zone)
-            elif zone_type == 'municipi':
-                response_data = self.get_photos_taken_in_municipi(zone)
+            try:
+                if zone_type == 'provincia':
+                    response_data = self.get_photos_taken_in_provincia(zone)
+                elif zone_type == 'comarca':
+                    response_data = self.get_photos_taken_in_comarca(zone)
+                elif zone_type == 'municipi':
+                    response_data = self.get_photos_taken_in_municipi(zone)
 
-            response_status = status.HTTP_200_OK
-            # except Exception as e:
-            #     response_status = status.HTTP_500_INTERNAL_SERVER_ERROR
+                response_status = status.HTTP_200_OK
+            except Exception as e:
+                response_status = status.HTTP_500_INTERNAL_SERVER_ERROR
 
         return Response(data=response_data, status=response_status)
 
@@ -258,6 +258,15 @@ class ListCreatePhotos(generics.ListCreateAPIView):
 
         created_photo = None
         try:
+            if not exif_data['location']:
+                lat = request.data.get('latitude', None)
+                lon = request.data.get('longitude', None)
+                exif_data['location'] = Photo.create_point(lat=lat, lon=lon)
+
+            if not exif_data['created_at']:
+                date = request.data.get('date', False)
+                exif_data['created_at'] = datetime.strptime(date, '%Y:%m:%d %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
+
             create_vals = {
                 'title': request.data["title"],
                 'date_uploaded': date_uploaded,
