@@ -329,3 +329,26 @@ class RegisterUsers(generics.CreateAPIView):
             data=UserSerializer(new_user).data,
             status=status.HTTP_201_CREATED
         )
+
+
+class ListUserPhotos(generics.ListAPIView):
+    """
+    GET search_my_photos/
+    """
+    queryset = Photo.objects.all().order_by('-date_uploaded')
+    serializer_class = PhotoSerializer
+
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            username = request.data.get('username', None)
+            photos = self.queryset.select_related('user').filter(user__username=username)
+            return Response(self.serializer_class(photos, many=True).data)
+        except Photo.DoesNotExist:
+            return Response(
+                data={
+                    "message": "User does not exist"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
