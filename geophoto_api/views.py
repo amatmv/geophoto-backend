@@ -368,11 +368,11 @@ class ListUserPhotos(generics.ListAPIView):
                     ON ST_Contains(prov.geom, photo.location) 
                 LEFT JOIN geophoto_api_user u 
                     ON u.id = photo.user_id
-                    AND u.username ilike '{username}'
                 LEFT JOIN geophoto_api_municipi AS mun
                     ON ST_Contains(mun.geom, photo.location)
                 LEFT JOIN geophoto_api_comarca AS comarca
                     ON ST_Contains(comarca.geom, photo.location)
+                WHERE u.username ilike '{username}'
             """.format(username=username)
             rows = Photo.objects.raw(raw_query=query)
             response_data = self.serializer_class(rows, many=True).data
