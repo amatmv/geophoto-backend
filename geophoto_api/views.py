@@ -5,7 +5,7 @@ import base64
 from PIL import Image
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 
 from rest_framework import generics, permissions
 from rest_framework_jwt.settings import api_settings
@@ -222,8 +222,8 @@ class ListCreatePhotos(generics.ListCreateAPIView):
 
     @staticmethod
     def get_bytesIO(data):
-        if isinstance(data, InMemoryUploadedFile):
-            photo_buf = io.BytesIO(data.file.getvalue())
+        if isinstance(data, (InMemoryUploadedFile, TemporaryUploadedFile)):
+            photo_buf = io.BytesIO(data.file.read())
         else:
             b64_decoded = base64.b64decode(data)
             photo_buf = io.BytesIO(b64_decoded)
